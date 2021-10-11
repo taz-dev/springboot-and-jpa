@@ -5,6 +5,7 @@ import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.OrderSimpleQueryDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,23 +58,6 @@ public class OrderSimpleApiController {
 
         return result;
     }
-    
-    @Data
-    static class SimpleOrderDto {
-        private Long orderId;
-        private String name;
-        private LocalDateTime orderDate;
-        private OrderStatus orderStatus;
-        private Address address;
-
-        public SimpleOrderDto(Order order) {
-            orderId = order.getId();
-            name = order.getMember().getName(); //LAZY 초기화
-            orderDate = order.getOrderDate();
-            orderStatus = order.getOrderStatus();
-            address = order.getDelivery().getAddress(); //LAZY 초기화
-        }
-    }
 
     /*
      * V3. 엔티티를 조회해서 DTO 로 변환(fetch join 사용O)
@@ -95,4 +79,25 @@ public class OrderSimpleApiController {
      * - 쿼리 1번 호출
      * - select 절에서 원하는 데이터만 선택해서 조회
      */
+    @GetMapping("/api/v4/simple-orders")
+    public List<OrderSimpleQueryDto> ordersV4() {
+        return orderRepository.findOrderDtos();
+    }
+
+    @Data
+    static class SimpleOrderDto {
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+
+        public SimpleOrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName(); //LAZY 초기화
+            orderDate = order.getOrderDate();
+            orderStatus = order.getOrderStatus();
+            address = order.getDelivery().getAddress(); //LAZY 초기화
+        }
+    }
 }
