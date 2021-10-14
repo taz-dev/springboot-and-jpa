@@ -23,6 +23,12 @@ public class OrderApiController {
 
     private final OrderRepository orderRepository;
 
+    /*
+    * 1. 엔티티를 직접 노출
+    *    - 엔티티가 변하면 API 스펙이 변함
+    *    - 트랜잭션 안에서 지연 로딩 필요
+    *    - 양방향 연관관계 문제 -> @JsonIgnore
+    */
     @GetMapping("/api/v1/orders")
     public List<Order> ordersV1() {
         List<Order> all = orderRepository.findAllByString(new OrderSearch());
@@ -36,6 +42,10 @@ public class OrderApiController {
         return all;
     }
 
+    /*
+    * 2. 엔티티를 DTO로 변환
+    *    - 트랜잭션 안에서 지연 로딩 필요
+    */
     @GetMapping("/api/v2/orders")
     public List<OrderDto> ordersV2() {
         List<Order> orders = orderRepository.findAllByString(new OrderSearch());
@@ -46,6 +56,27 @@ public class OrderApiController {
 
         return result;
     }
+
+    /*
+    * 3. 엔티티를 DTO로 변환 - 페치 조인 최적화
+    *    - 장점 : JPA의 distinct는 SQL에 distinct를 추가하고, 같은 엔티티가 조회되면, 중복을 걸러줌
+    *             -> order가 컬렉션 페치 조인때문에 중복 조회되는 것을 막아줌
+    *    - 단점 : 페이징 불가능
+    */
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
+    /*
+    * 3-1. 엔티티를 조회해서 DTO로 변환 - 페이징 고려
+    */
 
     @Getter
     static class OrderDto {
